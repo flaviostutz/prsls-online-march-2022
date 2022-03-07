@@ -60,12 +60,12 @@ So we just need to add the root URL to our API as an environment variable.
 
 ```yml
 environment:
-  restaurants_api:
+  rest_api_url:
     Fn::Join:
       - ""
       - - https://
         - !Ref ApiGatewayRestApi
-        - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
+        - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
 ```
 
 Because this environment variable is added to the `provider` section as opposed to under a specific function's definition, it's added to all the functions in this project.
@@ -86,23 +86,21 @@ provider:
           Action: execute-api:Invoke
           Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
   environment:
-    restaurants_api:
+    rest_api_url:
       Fn::Join:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
 ```
 
-5. run `npx sls deploy` to deploy the latest change.
-
-From this point on, the `serverless-export-env` plugin would add this new environment variable to the `.env` file, which is then picked up and loaded into our tests by the `init` module.
+The `serverless-export-env` plugin would add this new environment variable to the `.env` file, which is then picked up and loaded into our tests by the `init` module.
 
 But we also need to set the `TEST_MODE` environment variable too. We'll do that in the `scripts` in `package.json`
 
-6. Open `package.json`.
+5. Open `package.json`.
 
-7. Change the `test` script to the following:
+6. Change the `test` script to the following:
 
 ```json
 "test": "npm run dotEnv && cross-env TEST_MODE=handler jest"
@@ -119,7 +117,7 @@ After this change, your `scripts` object should look like this:
 
 This sets the `TEST_MODE` environment variable to `handler` whenever we run `npm run test` (or `npm t`).
 
-8. Rerun the integration tests
+7. Rerun the integration tests
 
 `npm run test`
 

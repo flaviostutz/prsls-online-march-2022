@@ -22,14 +22,6 @@
 
     `npm install --save-dev serverless`
 
-    Add `sls` to npm scripts by editing your `package.json` so your `scripts` section looks like this:
-
-    ```json
-      "scripts": {
-        "sls": "serverless"
-      },
-    ```
-
 4. Create nodejs Serverless project using one of the default templates.
 
     `npx sls create --template aws-nodejs`
@@ -48,12 +40,14 @@
 ```yml
 service: workshop-${self:custom.name}
 
+frameworkVersion: '3'
+
 custom:
   name: <YOUR_NAME_HERE>
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
 
 functions:
   get-index:
@@ -191,8 +185,13 @@ And since the variable `html` is declared and assigned OUTSIDE the handler funct
 2. In the output you should see something like this:
 
 ```
-endpoints:
-  GET - https://xxxxx.execute-api.us-east-1.amazonaws.com/dev/
+Deploying workshop-yancui to stage dev (us-east-1)
+
+✔ Service deployed to stack workshop-yancui-dev (129s)
+
+endpoint: GET - https://xxx.execute-api.us-east-1.amazonaws.com/dev/
+functions: 
+  get-index: workshop-yancui-dev-get-index (43 kB)
 ```
 
 Load the endpoint in the browser and see something like the following:
@@ -526,10 +525,12 @@ provider:
   name: aws
   runtime: nodejs12.x
 
-  iamRoleStatements:
-    - Effect: Allow
-      Action: dynamodb:scan
-      Resource: !GetAtt RestaurantsTable.Arn
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: dynamodb:scan
+          Resource: !GetAtt RestaurantsTable.Arn
 ```
 
 This adds the `dynamodb:scan` permission to the Lambda execution role.
@@ -739,7 +740,7 @@ After this change, the `get-index` function needs the `restaurants_api` environm
 The Serverless **ALWAYS** use the logical ID `ApiGatewayRestApi` for the API Gateway REST API resource it creates. So you can construct the URL for the `/restaurants` endpoint using the `Fn::Sub` CloudFormation pseudo function (or the `!Sub` shorthand) like this:
 
 ```yml
-!Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}/restaurants
+!Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
 See [here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-sub.html) for more info on the `Fn::Sub` pseudo function.
@@ -754,7 +755,7 @@ get-index:
         path: /
         method: get
   environment:
-    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}/restaurants
+    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
 The `Fn::Sub` pseudo function (we used the `!Sub` shorthand) lets you reference other CloudFormation resources as well as CloudFormation pseudo parameters with the `${}` syntax. Here we needed to reference two of these:

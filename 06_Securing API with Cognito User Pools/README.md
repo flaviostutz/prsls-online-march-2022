@@ -64,7 +64,7 @@ module.exports.handler = async (event, context) => {
 
 `npx sls deploy`
 
-5. Curl the `/restaurants/search` endpoint for the `cartoon` theme (don't forget to replace the url with the one you deployed)
+5. Curl the `/restaurants/search` endpoint for the `cartoon` theme (**don't forget to replace the url with the one you deployed**)
 
 `curl -d '{"theme":"cartoon"}' -H "Content-Type: application/json" -X POST https://xxx.execute-api.us-east-1.amazonaws.com/dev/restaurants/search`
 
@@ -168,7 +168,7 @@ get-index:
         path: /
         method: get
   environment:
-    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}/restaurants
+    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}/restaurants
     cognito_user_pool_id: !Ref CognitoUserPool
     cognito_client_id: !Ref WebCognitoUserPoolClient
 ```

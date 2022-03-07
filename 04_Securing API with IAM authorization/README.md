@@ -39,6 +39,25 @@ statements:
 
 Once again, we're using the `!Sub` function here. The resource ARN points to the `GET /restaurants` endpoint we added in the last module, and notice that we're also referencing the `AWS::AccountId` pseudo parameter. It returns the id of the AWS account you're deploying the CloudFormation stack to.
 
+**IMPORTANT**: after this step, your `provider` section should look like this:
+
+```yml
+provider:
+  name: aws
+  runtime: nodejs14.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: dynamodb:scan
+          Resource: !GetAtt RestaurantsTable.Arn
+        - Effect: Allow
+          Action: execute-api:Invoke
+          Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
+```
+
+Check the indentation in your `serverless.yml` and make sure they match the above.
+
 </p></details>
 
 <details>

@@ -13,6 +13,17 @@
 
 3. Add a `steps` folder under `tests`
 
+After this step the structure of the project should look like this:
+
+```
+root
+  |- functions
+  |- static
+  |- tests
+       |- steps
+       |- test_cases
+```
+
 4. Install `jest` as a dev dependency
 
 `npm install --save-dev jest`
@@ -145,7 +156,6 @@ describe(`When we invoke the GET / endpoint`, () => {
 
 ```json
 "scripts": {
-  "sls": "serverless",
   "dotEnv": "sls export-env --all",
   "test": "npm run dotEnv && jest"
 },
@@ -318,7 +328,7 @@ get-index:
         path: /
         method: get
   environment:
-    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}/restaurants
+    restaurants_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}/restaurants
     cognito_user_pool_id: !Ref CognitoUserPool
     cognito_client_id: !Ref WebCognitoUserPoolClient
 ```
@@ -346,7 +356,7 @@ restaurants_api:
     - ""
     - - https://
       - !Ref ApiGatewayRestApi
-      - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/restaurants
+      - .execute-api.${self:provider.region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
 After your change, the `get-index` function should look like this:
@@ -364,10 +374,20 @@ get-index:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/restaurants
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
     cognito_user_pool_id: !Ref CognitoUserPool
     cognito_client_id: !Ref WebCognitoUserPoolClient
 ```
+
+*NOTE*: the `${aws:region}` above is a variable that returns the region used by the Serverless CLI. The `${aws:region}` variable is a shortcut for `${opt:region, self:provider.region, "us-east-1"}`, which means:
+  
+* use any `region` command line option if provided, e.g. when you run a command such as `npx sls deploy --region eu-west-1`
+
+* if no command line option is found, then use the `provider.region` value if provided.
+
+* otherwise, use `us-east-1`
+
+The `,` within the `${...}` syntax provide fallbacks. We'll see this syntax again in later exercises.
 
 2. Rerun the test
 

@@ -25,16 +25,16 @@ get-restaurants:
 <details>
 <summary><b>Add execute-api:Invoke to the IAM execution role</b></summary><p>
 
-1. Modify `serverless.yml` to update the `iamRoleStatements` property
+1. Modify `serverless.yml` to update the `provider.iam.role.statements` property
 
 ```yml
-iamRoleStatements:
+statements:
   - Effect: Allow
     Action: dynamodb:scan
     Resource: !GetAtt RestaurantsTable.Arn
   - Effect: Allow
     Action: execute-api:Invoke
-    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
+    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
 ```
 
 Once again, we're using the `!Sub` function here. The resource ARN points to the `GET /restaurants` endpoint we added in the last module, and notice that we're also referencing the `AWS::AccountId` pseudo parameter. It returns the id of the AWS account you're deploying the CloudFormation stack to.

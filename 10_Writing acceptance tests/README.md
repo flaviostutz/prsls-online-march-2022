@@ -60,12 +60,12 @@ So we just need to add the root URL to our API as an environment variable.
 
 ```yml
 environment:
-  rest_api_url:
+  restaurants_api:
     Fn::Join:
       - ""
       - - https://
         - !Ref ApiGatewayRestApi
-        - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+        - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
 Because this environment variable is added to the `provider` section as opposed to under a specific function's definition, it's added to all the functions in this project.
@@ -75,32 +75,34 @@ After this change, the `provider` section of your `serverless.yml` should look l
 ```yml
 provider:
   name: aws
-  runtime: nodejs12.x
-
-  iamRoleStatements:
-    - Effect: Allow
-      Action: dynamodb:scan
-      Resource: !GetAtt RestaurantsTable.Arn
-    - Effect: Allow
-      Action: execute-api:Invoke
-      Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
-
+  runtime: nodejs14.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: dynamodb:scan
+          Resource: !GetAtt RestaurantsTable.Arn
+        - Effect: Allow
+          Action: execute-api:Invoke
+          Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
   environment:
-    rest_api_url:
+    restaurants_api:
       Fn::Join:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
-The `serverless-export-env` plugin would add this new environment variable to the `.env` file, which is then picked up and loaded into our tests by the `init` module.
+5. run `npx sls deploy` to deploy the latest change.
+
+From this point on, the `serverless-export-env` plugin would add this new environment variable to the `.env` file, which is then picked up and loaded into our tests by the `init` module.
 
 But we also need to set the `TEST_MODE` environment variable too. We'll do that in the `scripts` in `package.json`
 
-5. Open `package.json`.
+6. Open `package.json`.
 
-6. Change the `test` script to the following:
+7. Change the `test` script to the following:
 
 ```json
 "test": "npm run dotEnv && cross-env TEST_MODE=handler jest"
@@ -110,7 +112,6 @@ After this change, your `scripts` object should look like this:
 
 ```json
   "scripts": {
-    "sls": "serverless",
     "dotEnv": "sls export-env --all",
     "test": "npm run dotEnv && cross-env TEST_MODE=handler jest"
   },
@@ -118,7 +119,7 @@ After this change, your `scripts` object should look like this:
 
 This sets the `TEST_MODE` environment variable to `handler` whenever we run `npm run test` (or `npm t`).
 
-7. Rerun the integration tests
+8. Rerun the integration tests
 
 `npm run test`
 
@@ -227,7 +228,6 @@ After this change, your `scripts` section should look like this:
 
 ```json
   "scripts": {
-    "sls": "serverless",
     "dotEnv": "sls export-env --all",
     "test": "npm run dotEnv && cross-env TEST_MODE=handler jest",
     "acceptance": "npm run dotEnv && cross-env TEST_MODE=http jest"

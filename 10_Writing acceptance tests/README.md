@@ -528,7 +528,7 @@ get-index:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/restaurants
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
     cognito_user_pool_id: !Ref CognitoUserPool
     cognito_client_id: !Ref WebCognitoUserPoolClient
     cognito_server_client_id: !Ref ServerCognitoUserPoolClient

@@ -120,7 +120,7 @@ This is what we need to add:
 
 ```yml
 serviceName: ${self:service}
-stage: ${self:provider.stage}
+stage: ${sls:stage}
 ```
 
 After this change, your `provider` section should look like this:
@@ -128,25 +128,25 @@ After this change, your `provider` section should look like this:
 ```yml
 provider:
   name: aws
-  runtime: nodejs12.x
-
-  iamRoleStatements:
-    - Effect: Allow
-      Action: dynamodb:scan
-      Resource: !GetAtt RestaurantsTable.Arn
-    - Effect: Allow
-      Action: execute-api:Invoke
-      Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
-
+  runtime: nodejs14.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: dynamodb:scan
+          Resource: !GetAtt RestaurantsTable.Arn
+        - Effect: Allow
+          Action: execute-api:Invoke
+          Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
   environment:
     rest_api_url:
       Fn::Join:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
     serviceName: ${self:service}
-    stage: ${self:provider.stage}
+    stage: ${sls:stage}
 ```
 
 3. Open `functions/get-restaurants.js`, and add these two lines to the top to require `middy` and its `ssm` middleware.
@@ -317,25 +317,27 @@ There's one last thing we need to do for this to work once we deploy the app - I
 - Effect: Allow
   Action: ssm:GetParameters*
   Resource:
-    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/get-restaurants/config
-    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/config
+    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
 ```
 
-After the change, the `provider.iamRoleStatements` block should look like this.
+After the change, the `provider.iam` block should look like this.
 
 ```yml
-iamRoleStatements:
-  - Effect: Allow
-    Action: dynamodb:scan
-    Resource: !GetAtt RestaurantsTable.Arn
-  - Effect: Allow
-    Action: execute-api:Invoke
-    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
-  - Effect: Allow
-    Action: ssm:GetParameters*
-    Resource:
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/get-restaurants/config
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/config
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource: !GetAtt RestaurantsTable.Arn
+      - Effect: Allow
+        Action: execute-api:Invoke
+        Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
+      - Effect: Allow
+        Action: ssm:GetParameters*
+        Resource:
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
 ```
 
 2. Deploy the project 
@@ -457,13 +459,13 @@ ServiceUrlParameter:
   Type: AWS::SSM::Parameter
   Properties:
     Type: String
-    Name: /${self:service}/${self:provider.stage}/serviceUrl
+    Name: /${self:service}/${sls:stage}/serviceUrl
     Value:
       Fn::Join:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
 ```
 
 Oh, and while you're here, the crazy thing is that CloudFormation doesn't currently support `SecureString` parameters...

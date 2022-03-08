@@ -103,33 +103,35 @@ somewhere in the handler function, and run the integration test to see that it's
 
 There's one last thing we need to do for this to work once we deploy the app - IAM permissions.
 
-1. Open `serverless.yml`, and find the `iamRoleStatements` block under `provider`, add the following permission statement.
+1. Open `serverless.yml`, and find the `iam.role.statements` block under `provider`, add the following permission statement.
 
 ```yml
 - Effect: Allow
   Action: ssm:GetParameters*
   Resource:
-    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/get-restaurants/config
-    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/config
-    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/secretString
+    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
+    - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/secretString
 ```
 
-After the change, the `iamRoleStatements` block should look like this.
+After the change, the `iam` block should look like this.
 
 ```yml
-iamRoleStatements:
-  - Effect: Allow
-    Action: dynamodb:scan
-    Resource: !GetAtt RestaurantsTable.Arn
-  - Effect: Allow
-    Action: execute-api:Invoke
-    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
-  - Effect: Allow
-    Action: ssm:GetParameters*
-    Resource:
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/get-restaurants/config
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/config
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/secretString
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource: !GetAtt RestaurantsTable.Arn
+      - Effect: Allow
+        Action: execute-api:Invoke
+        Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
+      - Effect: Allow
+        Action: ssm:GetParameters*
+        Resource:
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/secretString
 ```
 
 2. Deploy the project
@@ -261,7 +263,7 @@ Since we don't have another project that manages these shared resources in the r
 
 3. Open `serverless.yml`.
 
-4. In the `iamRoleStatements` block, add the following permissions
+4. In the `provider.iam.role.statements` block, add the following permissions
 
 ```yml
 - Effect: Allow

@@ -18,12 +18,14 @@ tracing:
 2. Add the following back to the `provider` section:
 
 ```yml
-iamRoleStatements:
-  - Effect: Allow
-    Action:
-      - "xray:PutTraceSegments"
-      - "xray:PutTelemetryRecords"
-    Resource: "*"
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Action:
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
+        Resource: "*"
 ```
 
 **IMPORTANT** this should be aligned with `provider.tracing` and `provider.environment`. e.g.
@@ -40,12 +42,14 @@ provider:
   tracing:
     apiGateway: true
     lambda: true
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - "xray:PutTraceSegments"
-        - "xray:PutTelemetryRecords"
-      Resource: "*"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "xray:PutTraceSegments"
+            - "xray:PutTelemetryRecords"
+          Resource: "*"
 ```
 
 This enables X-Ray tracing for all the functions in this project. Normally, when you enable X-Ray tracing in the `provider.tracing` the Serverless framework would add these permissions for you automatically. However, since we're using the `serverless-iam-roles-per-function`, these additional permissions are not passed along...
@@ -170,7 +174,7 @@ More details about this [here](https://theburningmonk.com/2019/02/lambda-optimiz
 Open `serverless.yml` and add the following environment variable to `provider.environment`:
 
 ```yml
-AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
 ```
 
 and redeploy

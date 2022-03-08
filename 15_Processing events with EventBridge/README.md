@@ -15,7 +15,7 @@
 EventBus:
   Type: AWS::Events::EventBus
   Properties:
-    Name: order_events_${self:provider.stage}_${self:custom.name}
+    Name: order_events_${sls:stage}_${self:custom.name}
 ```
 
 **IMPORTANT**: make sure that this `EventBus` resource is aligned with `ServiceUrlParameter`, `CognitoUserPool` and other CloudFormation resources.
@@ -59,7 +59,7 @@ Notice that this new function references the newly created `EventBridge` bus, wh
 
 This function also uses the same Cognito User Tool for authorization, as it'll be called directly by the client app.
 
-2. Add the permission to publish events to `EventBridge` by adding the following to the list of permissions under `iamRoleStatements`:
+2. Add the permission to publish events to `EventBridge` by adding the following to the list of permissions under `provider.iam.role.statements`:
 
 ```yml
 - Effect: Allow
@@ -836,7 +836,7 @@ orders_api:
     - ""
     - - https://
       - !Ref ApiGatewayRestApi
-      - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/orders
+      - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/orders
 ```
 
 3. Modify `functions/get-index.js` to fetch the URL endpoint to place orders (from a new `orders_api` environment variable). On ln8 where you have:
@@ -994,10 +994,10 @@ In any case, after this, your `provider` section should look something like this
 ```yml
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   eventBridge:
     useCloudFormation: true
-  iamRoleStatements:
+  iam:
     ...
   environment:
     ...  
@@ -1017,7 +1017,7 @@ As for the subscription pattern itself, well, in this case we're listening for o
 
 To learn more about content-based filtering with EventBridge, have a read of [this post](https://www.tbray.org/ongoing/When/201x/2019/12/18/Content-based-filtering) by Tim Bray.
 
-8. Modify `serverless.yml` to add the permission to `sns:Publish` to the SNS topic, under `provider.iamRoleStatements`
+8. Modify `serverless.yml` to add the permission to `sns:Publish` to the SNS topic, under `provider.iam.role.statements`
 
 ```yml
 - Effect: Allow

@@ -15,7 +15,7 @@
 Conditions:
   IsE2eTest:
     Fn::Equals:
-      - ${self:provider.stage}
+      - ${sls:stage}
       - dev
 ```
 

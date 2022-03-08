@@ -228,57 +228,44 @@ Ran all test suites.
 
 This logger allows you to control the default log level via the `LOG_LEVEL` environment variable. Let's configure the `LOG_LEVEL` environment such that we'll be logging at `INFO` level in production, but logging at `DEBUG` level everywhere else.
 
-1. Open `serverless.yml`. Under the `custom` section at the top, add `stage` and `logLevel` as below:
+1. Open `serverless.yml`. Under the `custom` section at the top, add `logLevel` as below:
 
 ```yml
-stage: ${opt:stage, self:provider.stage}
 logLevel:
   prod: INFO
   default: DEBUG
 ```
 
-`custom.stage` uses the `${xxx, yyy}` syntax to provide a fall back. In this case, we're saying "if a `stage` variable is provided via the CLI, e.g. `sls deploy --stage staging`, then resolve to `staging`; otherwise, fallback to `provider.stage` in this file (hence the `self` reference"
-
 2. Still in the `serverless.yml`, under `provider.environment` section, add the following
 
 ```yml
-LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
+LOG_LEVEL: ${self:custom.logLevel.${sls:stage}, self:custom.logLevel.default}
 ```
 
-This uses the same `${xxx, yyy}` syntax as before.
+This uses the `${xxx, yyy}` syntax to provide a fall back. In this case, we're saying "if there is an environment specific override available for the current stage, e.g. `custom.logLevel.dev`, then use it. Otherwise, fall back to `custom.logLevel.default`"
+
+This is a nice trick to specify a stage-specific override, but then fall back to some default value otherwise.
 
 After this change, the `provider` section should look like this:
 
 ```yml
 provider:
   name: aws
-  runtime: nodejs12.x
-
+  runtime: nodejs14.x
   eventBridge:
     useCloudFormation: true
-
   environment:
     rest_api_url:
       Fn::Join:
         - ""
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
     serviceName: ${self:service}
-    stage: ${self:provider.stage}
-    LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
+    stage: ${sls:stage}
+    LOG_LEVEL: ${self:custom.logLevel.${sls:stage}, self:custom.logLevel.default}
 ```
 
 This applies the `LOG_LEVEL` environment variable (used to decide what level the logger should log at) to all the functions in the project (since it's specified under `provider`).
-
-It references the `custom.logLevel` object (with the `self:` syntax), and also references the `custom.stage` value (remember, this can be overriden by CLI options). So when the deployment stage is `prod`, it resolves to `self:custom.logLevel.prod` and `LOG_LEVEL` would be set to `INFO`.
-
-The second argument, `self:custom.logLevel.default` provides the fallback if the first path is not found. If the deployment stage is `dev`, it'll see that `self:custom.logLevel.dev` doesn't exist, and therefore use the fallback `self:custom.logLevel.default` and set `LOG_LEVEL` to `DEBUG` in that case.
-
-This is a nice trick to specify a stage-specific override, but then fall back to some default value otherwise.
-
-3. Throughput the `serverless.yml` we have references to `provider.stage` directly. If we want to deploy to another stage, we'll need to change these references to use `${self:custom.stage}` instead.
-
-Find and replace `${self:provider.stage}` in the `serverless.yml` with `${self:custom.stage}`.
 
 </p></details>

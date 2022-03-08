@@ -25,7 +25,7 @@ plugins:
 <details>
 <summary><b>Issue individual permissions</b></summary><p>
 
-1. Open `serverless.yml` and delete the `iamRoleStatements` section
+1. Open `serverless.yml` and delete the entire `iam` block
 
 2. Give the `get-index` function its own IAM role statements by adding the following to its definition
 
@@ -33,7 +33,7 @@ plugins:
 iamRoleStatements:
   - Effect: Allow
     Action: execute-api:Invoke
-    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
+    Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
 ```
 
 **IMPORTANT** this new block should be aligned with `environment` and `events`, e.g.
@@ -50,7 +50,7 @@ get-index:
   iamRoleStatements:
     - Effect: Allow
       Action: execute-api:Invoke
-      Resource: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:provider.stage}/GET/restaurants
+      Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
 ```
 
 3. Similarly, give the `get-restaurants` function its own IAM role statements
@@ -62,7 +62,7 @@ iamRoleStatements:
     Resource: !GetAtt RestaurantsTable.Arn
   - Effect: Allow
     Action: ssm:GetParameters*
-    Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/get-restaurants/config
+    Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
 ```
 
 4. Give the `search-restaurants` function its own IAM role statements
@@ -75,11 +75,11 @@ iamRoleStatements:
   - Effect: Allow
     Action: ssm:GetParameters*
     Resource:
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/config
-      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:provider.stage}/search-restaurants/secretString
+      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
+      - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/secretString
   - Effect: Allow
     Action: kms:Decrypt
-    Resource: ${ssm:/dev/kmsArn}
+    Resource: ${ssm:/${sls:stage}/kmsArn}
 ```
 
 5. Give the `place-order` function its own IAM role statements

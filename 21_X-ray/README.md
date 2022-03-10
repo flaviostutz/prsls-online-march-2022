@@ -33,7 +33,7 @@ iam:
 ```yml
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   stage: dev
   environment:
     ...

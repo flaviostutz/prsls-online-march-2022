@@ -356,7 +356,7 @@ restaurants_api:
     - ""
     - - https://
       - !Ref ApiGatewayRestApi
-      - .execute-api.${self:provider.region}.amazonaws.com/${sls:stage}/restaurants
+      - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
 ```
 
 After your change, the `get-index` function should look like this:
